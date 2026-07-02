@@ -1,7 +1,17 @@
 import 'dotenv/config';
 
+import { unified } from 'unified';
+
 import express from 'express';
 import cors from 'cors';
+
+import remarkParse from 'remark-parse';
+import remarkGfm from 'remark-gfm';
+import rehypeSlug from 'rehype-slug';
+import remarkRehype from 'remark-rehype';
+import rehypeStringify from 'rehype-stringify';
+
+import matter from 'gray-matter';
 
 import * as z from 'zod';
 
@@ -9,7 +19,9 @@ import path from 'node:path';
 import fs from 'node:fs';
 import crypto from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
+
 import { getModrinthUserFromToken, token, upsertUser } from './utils';
+import remarkFillVariables from './varplugin';
 
 const dataDir = path.join(__dirname, '..', 'data');
 if (!fs.existsSync(dataDir)) {
@@ -58,9 +70,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 
 app.set('view engine', 'ejs');
- app.set('views', path.join(__dirname, '/views')); 
+app.set('views', path.join(__dirname, '/views'));
 
-app.get('/', (req, res) => {
+app.use(express.static(path.join(__dirname, 'static')));
+
+app.get('/', async (req, res) => {
   const totalStmt = db.prepare('SELECT COUNT(*) as count FROM users');
   const totalResult = totalStmt.get() as { count: number };
 
@@ -70,10 +84,83 @@ app.get('/', (req, res) => {
   `);
   const ninetyDaysAgo = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString();
   const activeResult = activeStmt.get(ninetyDaysAgo) as { count: number };
+
+  const md = unified()
+    .use(remarkParse)
+    .use(remarkFillVariables, { variables: { totalUsers: totalResult.count, activeUsers: activeResult.count } })
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeSlug)
+    .use(rehypeStringify, { allowDangerousHtml: true });
+
+  const raw = fs.readFileSync(path.join(__dirname, 'pages', 'index.md'), 'utf8');
+
+  const { data, content } = matter(raw);
+  const output = await md.process(content);
   
-  res.render('index', {
-    totalUsers: totalResult.count,
-    activeUsers: activeResult.count
+  res.render('main', {
+    page: {
+      ...data,
+      content: output,
+      extra: {
+        totalUsers: totalResult.count,
+        activeUsers: activeResult.count
+      }
+    },
+  });
+});
+
+app.get('/privacy', async (req, res) => {
+  const md = unified()
+    .use(remarkParse)
+    .use(remarkFillVariables, { variables: { } })
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeSlug)
+    .use(rehypeStringify, { allowDangerousHtml: true });
+
+  const raw = fs.readFileSync(path.join(__dirname, 'pages', 'privacy.md'), 'utf8');
+
+  const { data, content } = matter(raw);
+  const output = await md.process(content);
+
+  res.render('main', {
+    page: {
+      ...data,
+      content: output,
+      extra: {}
+    }
+  });
+});
+
+app.get('/opt-out', async (req, res) => {
+  const uri = new URL('https://modrinth.com/auth/authorize');
+
+  uri.searchParams.append('response_type', 'code');
+  uri.searchParams.append('client_id', process.env.CLIENT_ID!);
+  uri.searchParams.append('redirect_uri', process.env.REDIRECT!);
+  uri.searchParams.append('scope', 'USER_READ');
+  uri.searchParams.append('state', 'web:delete');
+
+  const md = unified()
+    .use(remarkParse)
+    .use(remarkFillVariables, { variables: { uri } })
+    .use(remarkGfm)
+    .use(remarkRehype, { allowDangerousHtml: true })
+    .use(rehypeSlug)
+    .use(rehypeStringify, { allowDangerousHtml: true });
+
+  const raw = fs.readFileSync(path.join(__dirname, 'pages', 'opt-out.md'), 'utf8');
+
+  const { data, content } = matter(raw);
+  const output = await md.process(req.query.success !== undefined ? '<font style="color: green;">Successfully deleted account data.</font>' : (req.query.error !== undefined ? '<font style="color: red;">Failed to delete account data, please try again.</font>\n\n' + content : content));
+
+  res.render('main', {
+    page: {
+      ...data,
+      content: output,
+      extra: {}
+    }
   });
 });
 
@@ -101,6 +188,33 @@ app.get('/oauth/callback', async (req, res) => {
       res.redirect(`rithle://oauth/callback?code=${c}&state=${state.replace('app:', '')}`)
     } else {
       res.status(401).send({ error: 'Unautorized' })
+    }
+  } else if (state.startsWith('web:')) {
+    const splat = state.split(':');
+
+    if (splat[1].toLocaleLowerCase() === 'delete') {
+      try {
+        const tkn = await token(code, process.env.REDIRECT || 'http://localhost:3000/oauth/callback');
+
+        if (!tkn) {
+          return res.redirect('/opt-out?error');
+        }
+
+        const modrinthUser = await getModrinthUserFromToken(`${tkn.token_type} ${tkn.access_token}`);
+
+        const deleteStmt = db.prepare('DELETE FROM users WHERE id = ?');
+        const result = deleteStmt.run(modrinthUser.id);
+
+        if (result.changes === 0) {
+          return res.redirect('/opt-out?error');
+        }
+
+        res.redirect('/opt-out?success');
+      } catch (err) {
+        res.redirect('/opt-out?error');
+      }
+    } else {
+      res.status(400).send({ error: 'Bad Request' });
     }
   } else
     res.status(401).send({ error: 'Unautorized' })

@@ -1,0 +1,46 @@
+/* cantarell-bold */
+@font-face {
+	font-family: "Cantarell";
+	font-style: normal;
+	font-weight: 700;
+	font-stretch: 100%;
+	src: local("Cantarell Bold"), local("Cantarell-Bold"), url(cantarell-bold.woff2) format("woff2"), url(cantarell-bold.woff) format("woff");
+	font-display: swap;
+}
+/* cantarell-extra-bold */
+@font-face {
+	font-family: "Cantarell";
+	font-style: normal;
+	font-weight: 700;
+	font-stretch: 100%;
+	src: local("Cantarell Extra Bold"), local("Cantarell-ExtraBold"), url(cantarell-extra-bold.woff2) format("woff2"), url(cantarell-extra-bold.woff) format("woff");
+	font-display: swap;
+}
+/* cantarell-light */
+@font-face {
+	font-family: "Cantarell";
+	font-style: normal;
+	font-weight: 300;
+	font-stretch: 100%;
+	src: local("Cantarell Light"), local("Cantarell-Light"), url(cantarell-light.woff2) format("woff2"), url(cantarell-light.woff) format("woff");
+	font-display: swap;
+}
+/* cantarell */
+@font-face {
+	font-family: "Cantarell";
+	font-style: normal;
+	font-weight: 100 800;
+	font-stretch: 100%;
+	src: local("Cantarell Regular"), local("Cantarell-Regular"), url(cantarell.woff2) format("woff2"), url(cantarell.woff) format("woff");
+	font-display: swap;
+}
+/* cantarell-thin */
+@font-face {
+	font-family: "Cantarell";
+	font-style: normal;
+	font-weight: 100;
+	font-stretch: 100%;
+	src: local("Cantarell Thin"), local("Cantarell-Thin"), url(cantarell-thin.woff2) format("woff2"), url(cantarell-thin.woff) format("woff");
+	font-display: swap;
+}
+
