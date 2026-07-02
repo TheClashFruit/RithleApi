@@ -2,6 +2,7 @@ FROM node:26-alpine AS builder
 
 WORKDIR /usr/src/app
 
+RUN npm install --global corepack@latest
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package*.json pnpm-lock.yaml* ./
@@ -18,6 +19,7 @@ WORKDIR /usr/src/app
 
 ENV NODE_ENV=production
 
+RUN npm install --global corepack@latest
 RUN corepack enable && corepack prepare pnpm@latest --activate
 
 COPY package*.json pnpm-lock.yaml* ./
