@@ -225,7 +225,7 @@ const tokenBody = z.object({
 }); 
 
 app.post('/oauth/token', (req, res) => {
-  if (!(/^Rithle\/\d+\.\d+\.\d+(?:-[\w.]+)?(?:\+[\w.]+)? \(https:\/\/github\.com\/TheClashFruit\/Rithle\)$/.test(req.header('user-agent') || '')))
+  if (!(/^Rithle\/(0|[1-9]\d*)\.(0|[1-9]\d*)\.(0|[1-9]\d*)(?:-((?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+([0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))? \(https:\/\/github\.com\/TheClashFruit\/Rithle\)$/.test(req.header('user-agent') || '')))
     return res.status(401).send({ error: 'Unautorized' });
   
   const { code } = tokenBody.parse(req.body);
