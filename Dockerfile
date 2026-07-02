@@ -27,6 +27,8 @@ RUN pnpm install --prod --frozen-lockfile
 
 COPY --from=builder /usr/src/app/dist ./dist
 COPY --from=builder /usr/src/app/src/views ./dist/views
+COPY --from=builder /usr/src/app/src/pages ./dist/pages
+COPY --from=builder /usr/src/app/src/static ./dist/static
 
 RUN mkdir -p data
 
