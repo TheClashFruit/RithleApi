@@ -1,9 +1,12 @@
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 
-import { acquireToken } from '../../util/modrinth';
+import { acquireToken, getUser } from '../../util/modrinth';
 
 import type { APIRoute } from 'astro';
 import { encrypt, getTokenSecret } from '../../util/crypto';
+import db from '../../util/db';
+import { tokensTable, usersTable } from '../../db/schema';
+import { add } from 'date-fns';
 
 export const prerender = false;
 
@@ -39,6 +42,22 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
   );
   if (!tkn) return new Response('Failed to acquire token.', { status: 500 });
 
+  try {
+    const user = await getUser(tkn.access_token);
+
+    await db
+      .insert(usersTable)
+      .values({ modrinthId: user.id })
+      .onConflictDoUpdate({
+        target: usersTable.modrinthId,
+        set: { lastLoginAt: new Date() },
+      });
+  } catch (e: unknown) {
+    console.error(e);
+
+    return new Response('Failed to upsert user.', { status: 500 });
+  }
+
   if (state!.action === 'web:auth') {
     cookies.set('rthl_session', tkn.access_token, {
       httpOnly: true,
@@ -50,14 +69,25 @@ export const GET: APIRoute = async ({ url, cookies, redirect }) => {
 
     return redirect('/settings', 302);
   } else if (state!.action.startsWith('app:')) {
-    const secureToken = encrypt(tkn.access_token, getTokenSecret());
-    const secureTokenKey = randomBytes(32).toString('base64url');
+    try {
+      const secureToken = encrypt(tkn.access_token, getTokenSecret());
+      const secureTokenKey = randomBytes(32).toString('base64url');
 
-    // TODO: SAVE TO DB
+      await db.insert(tokensTable).values({
+        key: secureTokenKey,
+        token: secureToken,
+        tokenExpiresIn: tkn.expires_in,
+        expiresAt: add(new Date(), { minutes: 10 })
+      });
 
-    return redirect(
-      `rithle://oauth/callback?code=${secureTokenKey}&state=${state.action.replace('app:', '')}`,
-      302
-    );
+      return redirect(
+        `rithle://oauth/callback?code=${secureTokenKey}&state=${state!.action.replace('app:', '')}`,
+        302
+      );
+    } catch (e: unknown) {
+      console.error(e);
+
+      return new Response('Failed to safely save token.', { status: 500 });
+    }
   } else return new Response('Invalid action.', { status: 403 });
 };

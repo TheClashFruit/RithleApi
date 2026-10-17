@@ -9,16 +9,26 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "drizzle-kit": "drizzle-kit"
   },
   "dependencies": {
     "@astrojs/markdown-satteri": "^0.4.4",
     "@astrojs/mdx": "^8.1.0",
     "@astrojs/node": "^11.1.8",
-    "astro": "^7.4.0"
+    "@se-oss/snowflake-sequence": "^1.0.0",
+    "astro": "^7.4.0",
+    "date-fns": "^4.4.0",
+    "drizzle-orm": "1.0.0-rc.4",
+    "pg": "^8.23.1",
+    "semver": "^7.8.5"
   },
   "devDependencies": {
     "@types/node": "^26.6.5",
+    "@types/pg": "^8.23.1",
+    "@types/semver": "^7.8.0",
+    "dotenv": "^18.0.8",
+    "drizzle-kit": "1.0.0-rc.4",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-astro": "^3.2.1",
     "eslint-plugin-prettier": "^5.5.7",

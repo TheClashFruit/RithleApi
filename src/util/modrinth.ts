@@ -47,3 +47,17 @@ export const acquireToken = async (code: string, redirect: string) => {
     expires_in: number;
   };
 }
+
+export const getUser = async (token: string) => {
+  const response = await fetch('https://api.modrinth.com/v2/user', {
+    headers: {
+      Authorization: token,
+      'User-Agent': 'RithleApi/2.0.0 (https://github.com/TheClashFruit/RithleApi)',
+    },
+  });
+
+  if (!response.ok)
+    throw new Error(`Failed to fetch Modrinth user: ${response.status}`);
+
+  return response.json() as Promise<{ id: string; [key: string]: unknown }>;
+}

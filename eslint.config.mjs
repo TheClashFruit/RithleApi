@@ -12,7 +12,7 @@ export default tseslint.config(
   eslintPluginPrettier,
   globalIgnores(['.astro/**', 'node_modules/**']),
   {
-    files: ['**/*.{js,ts,jsx,tsx,mjs,cjs}'],
+    files: ['**/*.{js,ts,jsx,tsx,mjs,cjs,astro}'],
     rules: {
       quotes: ['error', 'single', { avoidEscape: true }],
       semi: ['error', 'always'],

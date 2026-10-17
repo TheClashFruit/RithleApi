@@ -1,54 +1,37 @@
 // TODO: DATABASE
 
-export function GET({ params, request }) {
+import semver from 'semver';
+
+import { versionsTable } from '../../../db/schema';
+import db from '../../../util/db';
+
+import type { APIRoute } from 'astro';
+
+export const prerender = false;
+
+export const GET: APIRoute = async ({}) => {
+  const versions = await db.select().from(versionsTable);
+
+  const stableSorted = semver.rsort(versions.filter((v) => v.type === 'stable').map((v) => v.name));
+  const stable = stableSorted.length > 0 ? versions.find(v => v.name === stableSorted[0])!.code : -1;
+ 
   return new Response(
     JSON.stringify({
-      stable: 3,
-      dev: 4,
-      versions: {
-        4: {
-          name: 'v1.1.0-dev.1',
-          changelog: 'Development build; see GitHub.',
-          download: {
-            direct:
-              'https://dl.theclashfruit.me/apps/me.theclashfruit.rithle/4/app-debug.apk',
-            github:
-              'https://github.com/TheClashFruit/Rithle/releases/tag/v1.1.0-dev.1'
+      latest: stable,
+      versions: Object.fromEntries(
+        versions.map((v) => [
+          v.code,
+          {
+            name: v.name,
+            changelog: v.changelog,
+            release: v.type,
+            download: {
+              direct: `https://dl.theclashfruit.me/apps/me.theclashfruit.rithle/${v.code}/app-release.apk`,
+              github: `https://github.com/TheClashFruit/Rithle/releases/tag/${v.name}`
+            }
           }
-        },
-        3: {
-          name: 'v1.0.0',
-          chnagelog:
-            '## Added\n\n* A toggleable update checker on app launch.\n\n**Full Changelog**: https://github.com/TheClashFruit/Rithle/compare/v1.0.0-beta.2...v1.0.0',
-          download: {
-            direct:
-              'https://dl.theclashfruit.me/apps/me.theclashfruit.rithle/3/app-release.apk',
-            github:
-              'https://github.com/TheClashFruit/Rithle/releases/tag/v1.0.0'
-          }
-        },
-        2: {
-          name: 'v1.0.0-beta.2',
-          changelog: `## Fixes\n\n* Markdown will not re-render whenever the toolbar collapses/expands.\n* Fixed crash on notifications screen when not logged in.\n\n## Added\n\n* Follow & unfollow projects.\n* Copy project id & permanent link.\n\n**Full Changelog**: https://github.com/TheClashFruit/Rithle/compare/v1.0.0-beta.1...v1.0.0-beta.2`,
-          download: {
-            direct:
-              'https://dl.theclashfruit.me/apps/me.theclashfruit.rithle/2/app-release.apk',
-            github:
-              'https://github.com/TheClashFruit/Rithle/releases/tag/v1.0.0-beta.2'
-          }
-        },
-        1: {
-          name: 'v1.0.0-beta.1',
-          changelog:
-            '3 years it took... A complete rewrite of Rithle in Jetpack Compose, hopefully includes everything needed to browse Modrinth.\n\n## Changes\n\nToo much, can we call this the initial release?',
-          download: {
-            direct:
-              'https://dl.theclashfruit.me/apps/me.theclashfruit.rithle/1/app-release.apk',
-            github:
-              'https://github.com/TheClashFruit/Rithle/releases/tag/v1.0.0-beta.1'
-          }
-        }
-      }
+        ])
+      )
     }),
     {
       headers: {
