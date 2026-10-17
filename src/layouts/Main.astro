@@ -1,0 +1,50 @@
+---
+export const prerender = false;
+
+import Scaffold from "../components/Scaffold.astro";
+
+import '../styles/global.css';
+
+const { frontmatter } = Astro.props;
+---
+
+<Scaffold title={frontmatter.title}>
+  <header>
+    <h1 style="margin-bottom: 0">Rithle</h1>
+    <h2 style="margin-top: 0">{frontmatter.title}</h2>
+
+    <nav>
+      <ul>
+        <li><a href="/">Home</a></li>
+      </ul>
+
+      <ul>
+        <li><a href="/oauth?action=web:auth">Login</a></li>
+      </ul>
+    </nav>
+  </header>
+  
+  <main>
+    <slot />
+  </main>
+
+  <footer>
+    <div>
+      <p>
+        Copyright &copy; {new Date().getFullYear()}{' '}
+        <a href="https://theclashfruit.me">TheClashFruit</a>.
+      </p>
+
+      <p>
+        Rithle is not affilated with Modrinth in any way.
+      </p>
+
+      <ul>
+        <li><a href="/privacy">Privacy Policy</a></li>
+        <li><a href="/settings/delete">Delete My Data</a></li>
+      </ul>
+    </div>
+
+    
+  </footer>
+</Scaffold>
