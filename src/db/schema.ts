@@ -1,4 +1,13 @@
-import { text, pgTable, varchar, timestamp, jsonb, integer, pgEnum } from 'drizzle-orm/pg-core';
+import {
+  text,
+  pgTable,
+  varchar,
+  timestamp,
+  jsonb,
+  integer,
+  pgEnum,
+  boolean
+} from 'drizzle-orm/pg-core';
 
 import { snowflake } from './types';
 import snowflakeGenerator from '../util/snowflake';
@@ -40,9 +49,11 @@ export const usersTable = pgTable('users', {
     })
     .notNull(),
 
-  lastLoginAt: timestamp({ withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  supporter: boolean().default(false).notNull(),
+
+  lastLoginAt: timestamp({ withTimezone: true }).notNull().defaultNow(),
+
+  createdAt: timestamp({ withTimezone: true }), // only present if the account was created before the pgsql migration
   updatedAt: timestamp({ withTimezone: true })
     .notNull()
     .defaultNow()
@@ -59,8 +70,7 @@ export const tokensTable = pgTable('tokens', {
 
   tokenExpiresIn: integer().notNull(),
 
-  expiresAt: timestamp({ withTimezone: true })
-    .notNull()
+  expiresAt: timestamp({ withTimezone: true }).notNull()
 });
 
 export const analyticsTable = pgTable('analytics', {
@@ -68,7 +78,7 @@ export const analyticsTable = pgTable('analytics', {
     .primaryKey()
     .$defaultFn(() => snowflakeGenerator.nextId()),
 
-  data: jsonb().$type<AnalyticsData>().notNull(),
+  data: jsonb().$type<AnalyticsData>().notNull()
 });
 
 export const versionsTable = pgTable('versions', {
@@ -81,5 +91,5 @@ export const versionsTable = pgTable('versions', {
 
   type: versionTypeEnum().notNull().default('stable'),
 
-  changelog: text().notNull(),
+  changelog: text().notNull()
 });
